@@ -1,6 +1,7 @@
 package com.example.mailtest.service;
 
 import java.io.File;
+import java.util.List;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -13,16 +14,24 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.example.mailtest.Repositories.MailListRepo;
+import com.example.mailtest.entity.MailList;
+
 @Service
 public class MailService {
 
 	@Autowired
 	public JavaMailSender emailSender;
 
-	@Scheduled(fixedRate = 5*60*1000)
+	@Autowired
+	public MailListRepo repository;
+	
 	public void scheduleFixedRateTask() {
 		
-		sendMessageWithAttachment("varinder.maan@gmail.com", "Test Mail", "Test Body"+ System.currentTimeMillis(),"C:\\Users\\pstcl-am-it\\Downloads\\resume_.pdf");
+		List<MailList> mails= repository.findFalse();
+		
+		for(MailList mailservice:mails)
+		sendMessageWithAttachment(mailservice.getEmailAddress(), "Test Mail", "<b>Test Body</b>"+ System.currentTimeMillis(),"C:\\Users\\pstcl-am-it\\Downloads\\resume_.pdf");
 
 	}
 
@@ -41,6 +50,7 @@ public class MailService {
 		// ...
 		
 		try {
+			
 			Thread.currentThread().sleep((1000*37)+(long) (1000*100*Math.random()));
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
@@ -54,11 +64,13 @@ public class MailService {
 			helper = new MimeMessageHelper(message, true);
 			helper.setTo(to);
 			helper.setSubject(subject);
-			helper.setText(text);
+			//html formatting true
+			helper.setText(text,true);
+			
 			FileSystemResource file 
 			= new FileSystemResource(new File(pathToAttachment));
 			helper.addAttachment("Invoice", file);
-
+			emailSender.send(message);
 
 		} catch (MessagingException e) {
 			// TODO Auto-generated catch block
@@ -67,7 +79,8 @@ public class MailService {
 
 
 
-		emailSender.send(message);
+	
+		System.out.println("Sent Successfully");
 		// ...
 	}
 
